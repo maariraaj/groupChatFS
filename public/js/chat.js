@@ -1,4 +1,4 @@
-const socket = io("http://localhost:4000");
+//const socket = io("http://localhost:4000");
 
 const modalSubmitBtn = document.getElementById('modalSubmitButton');
 const chatForm = document.getElementById("chatForm");
@@ -70,7 +70,7 @@ chatForm.addEventListener("submit", async (event) => {
             saveChatsToLocalStorage(updatedChats);
             messageInput.value = "";
             loadChatsFromLocalStorage();
-            socket.emit("messageSent", "message sent successfully");
+            //socket.emit("messageSent", "message sent successfully");
         } catch (error) {
             console.error("Error sending chat:", error);
         }
@@ -241,7 +241,7 @@ modalSubmitBtn.addEventListener("click", async (e) => {
             userSelectSet.clear();
             user_list.innerHTML = "";
             groupModal.classList.add("hidden");
-            socket.emit("group", "Group created/updated");
+            //socket.emit("group", "Group created/updated");
             showGroup();
         } else {
             Toastify({
@@ -354,19 +354,19 @@ document.addEventListener("DOMContentLoaded", () => {
     showGroupChats(group_id, group_name, group_desc, admin_id);
     showGroup();
 
-    // timerId = setInterval(() => {
-    //     showGroupChats(group_id, group_name, group_desc, admin_id);
-    //     showGroup();
-    // }, 1000);
-
-    socket.on('message received', (msg) => {
-        console.log('Server says:', msg);
+    timerId = setInterval(() => {
         showGroupChats(group_id, group_name, group_desc, admin_id);
-    });
-
-    socket.on('group created or updated', (msg) => {
-        console.log('Server says:', msg);
         showGroup();
-        showGroupChats(group_id, group_name, group_desc, admin_id);
-    });
+    }, 1000);
+
+    // socket.on('message received', (msg) => {
+    //     console.log('Server says:', msg);
+    //     showGroupChats(group_id, group_name, group_desc, admin_id);
+    // });
+
+    // socket.on('group created or updated', (msg) => {
+    //     console.log('Server says:', msg);
+    //     showGroup();
+    //     showGroupChats(group_id, group_name, group_desc, admin_id);
+    // });
 });

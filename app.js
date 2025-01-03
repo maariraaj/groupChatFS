@@ -1,8 +1,8 @@
 const express = require('express');
 
-const http = require("http");
-const { Server } = require("socket.io");
-const { instrument } = require("@socket.io/admin-ui");
+// const http = require("http");
+// const { Server } = require("socket.io");
+// const { instrument } = require("@socket.io/admin-ui");
 
 const sequelize = require("./util/database");
 const bodyParser = require('body-parser');
@@ -16,13 +16,13 @@ require('dotenv').config();
 
 const app = express();
 
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: ["https://admin.socket.io", , "http://localhost:4000"],
-        credentials: true,
-    },
-});
+// const server = http.createServer(app);
+// const io = new Server(server, {
+//     cors: {
+//         origin: ["https://admin.socket.io", , "http://localhost:4000"],
+//         credentials: true,
+//     },
+// });
 
 // app.use(helmet());
 // app.use(compression());
@@ -62,27 +62,27 @@ async function ensureDefaultGroupExists() {
     }
 }
 
-instrument(io, {
-    auth: false,
-});
+// instrument(io, {
+//     auth: false,
+// });
 
-io.on("connection", (socket) => {
-    console.log(`User connected: ${socket.id}`);
+// io.on("connection", (socket) => {
+//     console.log(`User connected: ${socket.id}`);
 
-    socket.on("messageSent", (data) => {
-        console.log("Message received:", data);
-        socket.broadcast.emit("message received", data);
-    });
+//     socket.on("messageSent", (data) => {
+//         console.log("Message received:", data);
+//         socket.broadcast.emit("message received", data);
+//     });
 
-    socket.on("group", (data) => {
-        console.log("Group event:", data);
-        socket.broadcast.emit("group created or updated", data);
-    });
+//     socket.on("group", (data) => {
+//         console.log("Group event:", data);
+//         socket.broadcast.emit("group created or updated", data);
+//     });
 
-    socket.on("disconnect", () => {
-        console.log(`User disconnected: ${socket.id}`);
-    });
-});
+//     socket.on("disconnect", () => {
+//         console.log(`User disconnected: ${socket.id}`);
+//     });
+// });
 
 sequelize
     .authenticate()
