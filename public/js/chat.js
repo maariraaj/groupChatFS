@@ -16,6 +16,9 @@ const groupChatDesc = document.getElementById("groupDesc");
 const editGroupBtn = document.getElementById("editGroup");
 const searchBar = document.getElementById("searchBar");
 const usersSelect = document.getElementById("usersSelect");
+const messageInput = document.getElementById("message");
+const flexSwitch = document.getElementById("flexSwitch");
+const flexSwitchLabel = document.getElementById("flexSwitchLabel");
 const token = localStorage.getItem("token");
 const userId = localStorage.getItem("userId");
 const username = localStorage.getItem("username");
@@ -29,13 +32,37 @@ let timerId = null;
 const loadChatsFromLocalStorage = () => {
     const storedChats = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
     chatsDiv.innerHTML = "";
+
     storedChats.forEach(chat => {
         const chatBox = document.createElement("div");
-        chatBox.className = "p-4 bg-emerald-200 rounded-lg shadow-md border border-emerald-600 break-words";
-        chatBox.innerHTML = `
-                <span class="text-emerald-800 font-semibold">${chat.user}:</span>
-                <span class="ml-2">${chat.message}</span>
-            `;
+        chatBox.className = "p-4 bg-emerald-200 rounded-lg shadow-md border border-emerald-600 flex flex-col gap-4";
+
+        const dateObj = new Date(chat.date_time);
+        const formattedDate = dateObj.toLocaleDateString("en-GB");
+        const formattedTime = dateObj.toLocaleTimeString();
+
+        if (chat.isImage) {
+            chatBox.innerHTML = `
+                <div class="flex flex-col items-start">
+                    <span class="text-emerald-800 font-semibold">${chat.user}</span>
+
+                    <div class="flex justify-center w-full mt-2">
+                        <img src="${chat.message}" alt="${chat.user}'s uploaded content" 
+                            class="w-full max-w-xs rounded-lg border border-emerald-600 object-cover">
+                    </div>
+
+                    <span class="text-sm text-gray-600 mt-2">${formattedDate}, ${formattedTime}</span>
+                </div>`;
+        } else {
+            chatBox.innerHTML = `
+                <div class="flex flex-col items-start">
+                    <span class="text-emerald-800 font-semibold">${chat.user}</span>
+
+                    <p class="mt-2 text-emerald-900 break-words">${chat.message}</p>
+
+                    <span class="text-sm text-gray-600 mt-2">${formattedDate}, ${formattedTime}</span>
+                </div>`;
+        }
         chatsDiv.appendChild(chatBox);
     });
 };
@@ -44,29 +71,61 @@ const saveChatsToLocalStorage = (chats) => {
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(chats));
 };
 
+flexSwitch.addEventListener('change', () => {
+    if (flexSwitchLabel.innerText === "Text") {
+        flexSwitchLabel.innerText = "Image";
+        messageInput.setAttribute('accept', 'image/*');
+        messageInput.type = "file"
+    } else {
+        flexSwitchLabel.innerText = "Text"
+        messageInput.removeAttribute('accept');
+        messageInput.type = "text"
+    }
+})
+
 chatForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const messageInput = document.getElementById("message");
+
     const message = messageInput.value.trim();
     const formElement = event.target;
 
     const hiddenInput = formElement.querySelector('input[type="hidden"]');
     const currentGroupId = hiddenInput.id;
+    let newChat;
     if (message) {
         try {
-            const response = await axios.post("/chats/chat",
-                { message, userId, username, currentGroupId },
-                { headers: { 'Authorization': token } }
-            );
-            const newChat = {
-                user: response.data.name,
-                message: response.data.message,
-                timestamp: response.data.createdAt,
-            };
+            if (flexSwitchLabel.innerText === "Text") {
+                const response = await axios.post("/chats/chat",
+                    { message, userId, username, currentGroupId },
+                    { headers: { 'Authorization': token } }
+                );
+                newChat = {
+                    user: response.data.name,
+                    message: response.data.message,
+                    date_time: response.data.createdAt,
+                    isImage: response.data.isImage
+                };
+            } else {
+                const file = messageInput.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const formData = new FormData();
+                    formData.append('image', file);
+                    formData.append('GroupId', group_id)
+                    const imageResponse = await axios.post('/chats/post-image', formData, {
+                        headers: { 'Authorization': token }
+                    });
+                    newChat = {
+                        user: username,
+                        message: imageResponse.data.data.message,
+                        isImage: imageResponse.data.data.isImage,
+                        date_time: imageResponse.data.data.createdAt,
+                    };
+                } else {
+                    alert('Please select a valid image file.');
+                }
+            }
             const storedChats = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
-
             const updatedChats = [newChat, ...storedChats].slice(0, MAX_LOCAL_STORAGE_CHATS);
-
             saveChatsToLocalStorage(updatedChats);
             messageInput.value = "";
             loadChatsFromLocalStorage();

@@ -3,6 +3,7 @@ const Chat = require('../models/chat');
 const User = require('../models/user');
 const GroupMember = require("../models/groupMember");
 const Group = require("../models/group");
+const awsService = require('../services/awsservices');
 const { Op } = require("sequelize");
 
 exports.getChat = (req, res) => {
@@ -31,6 +32,7 @@ exports.postChat = async (req, res) => {
       message: chat.dataValues.message,
       groupId: chat.dataValues.groupId,
       userId: chat.dataValues.userId,
+      isImage: chat.dataValues.isImage,
       updatedAt: chat.dataValues.updatedAt,
       createdAt: chat.dataValues.createdAt
     };
@@ -119,6 +121,7 @@ exports.getGroupChatHistory = async (req, res) => {
         messageId: ele.id,
         message: ele.message,
         groupId: ele.groupId,
+        isImage: ele.isImage,
         user: curUser.name,
         userId: curUser.id,
         date_time: ele.date_time
@@ -199,3 +202,22 @@ exports.postUpdateGroup = async (req, res) => {
     return res.status(500).json({ message: 'An error occurred while updating the group.', error, });
   }
 };
+
+exports.saveChatImages = async (req, res) => {
+  try {
+    const user = req.user;
+    const image = req.file;
+    const { GroupId } = req.body;
+
+    const filename = `chat-images/group${GroupId}/user${user.id}/${Date.now()}_${image.originalname}`;
+    const imageUrl = await awsService.uploadToS3(image.buffer, filename);
+
+    const data = await user.createChat({ message: imageUrl, groupId: GroupId, isImage: true });
+
+    return res.status(200).json({ message: "Image saved to database successfully", data });
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: 'Internal Server error!' });
+  }
+}
