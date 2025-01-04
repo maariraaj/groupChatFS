@@ -10,6 +10,10 @@ const path = require('path');
 const userRoutes = require("./routes/user");
 const chatRoutes = require("./routes/chat");
 const Group = require("./models/group");
+
+const cronService = require('./services/cron');
+cronService.job.start();
+
 //const helmet = require('helmet');
 //const compression = require('compression');
 require('dotenv').config();
