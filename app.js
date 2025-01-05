@@ -97,7 +97,7 @@ sequelize
                 console.log("Database synced successfully");
                 await ensureDefaultGroupExists();
 
-                app.listen(process.env.PORT, () => {
+                app.listen(process.env.PORT || 5000, () => {
                     console.log(`Server running`);
                 });
             });
